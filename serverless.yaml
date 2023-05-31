@@ -1,0 +1,50 @@
+service: app-api-cognito
+
+frameworkVersion: '3'
+
+provider:
+    name: aws
+    region: "sa-east-1"
+    runtime: nodejs18.x
+    iam:
+        role:
+            statements:            
+                - Effect: Allow
+                  Action:
+                    - dynamodb:PutItem
+                    - dynamodb:Scan
+                    - dynamodb:GetItem
+                  Resource: '*'
+
+functions:
+    itemsGet:
+        handler: src/items-get.itemsGet
+        events:
+            - httpApi:
+                path: /item/{id}
+                method: get
+    itemsInsert:
+        handler: src/items-insert.itemsInsert        
+        events:
+            - httpApi:
+                path: /item
+                method: post
+
+
+resources:
+    Resources:
+        TableItems:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                TableName: Items
+                AttributeDefinitions:
+                    - 
+                      AttributeName: id
+                      AttributeType: S
+                KeySchema:
+                    - 
+                      AttributeName: id
+                      KeyType: HASH
+                ProvisionedThroughput:
+                    ReadCapacityUnits: 1
+                    WriteCapacityUnits: 1
