@@ -3,14 +3,9 @@ const Items = require('./items-entity');
 const Repository = require('./items-dynamodb-repository');
 
 
-module.exports.itemsInsert = async(event) => {
-	try{
-		/*const body = {
-			description: "Bike",
-			price: "1500"
-		}*/
-				
-		const items = new Items(event.body);		
+module.exports.itemsInsert = async({ body }) => {
+	try{		
+		const items = new Items(JSON.parse(body));
 		const repository = new Repository();
 		await repository.insert(items.values());
 		return response({},204);

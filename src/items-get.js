@@ -3,10 +3,9 @@ const { response } = require('./response');
 const Repository = require('./items-dynamodb-repository');
 
 
-module.exports.itemsGet = async(event) => {
+module.exports.itemsGet = async({pathParameters:{ id }}) => {
 		
-	try{			
-		const { id } = event.pathParameters;		
+	try{
 		const repository = new Repository();
 		let items = await repository.getById(id);		
 		return response(items);
