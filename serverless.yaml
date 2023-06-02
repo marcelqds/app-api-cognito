@@ -6,6 +6,14 @@ provider:
     name: aws
     region: "sa-east-1"
     runtime: nodejs18.x
+    httpApi:
+        authorizers:
+            cognitoAuthorizer:
+                type: jwt
+                identitySource: $request.headers.Authorization
+                issuerUrl: https://cognito-idp.sa-east-1.amazonaws.com/sa-east-1_ry8Fq4CQb
+                audience:
+                    - 1bo52vqupe63rk5lujaos1gbef
     iam:
         role:
             statements:            
@@ -29,7 +37,8 @@ functions:
             - httpApi:
                 path: /item
                 method: post
-
+                authorizer:
+                    name: cognitoAuthorizer
 
 resources:
     Resources:
@@ -48,3 +57,52 @@ resources:
                 ProvisionedThroughput:
                     ReadCapacityUnits: 1
                     WriteCapacityUnits: 1
+
+        NewCognito:
+            Type: AWS::Cognito::UserPool
+            Properties:
+                AccountRecoverySetting:
+                    RecoveryMechanisms:
+                        - Name: verified_email
+                          Priority: 1                          
+                UserPoolName: SystemUserPool
+                Policies:
+                    PasswordPolicy:
+                        MinimumLength: 6
+                        RequireLowercase: True
+                        RequireUppercase: True
+                AutoVerifiedAttributes:
+                    - email
+                EmailVerificationSubject: "Ativacao de cadastro"
+                EmailVerificationMessage: "Código de ativação: {####}"
+                VerificationMessageTemplate:
+                    DefaultEmailOption: CONFIRM_WITH_LINK
+                    EmailSubject: "Ativacao de usuario"
+                    EmailMessage: "Código de ativação: {####}"
+                    EmailMessageByLink: "Seja bem-vindo! {##Clique-me para ativar seu usuário##}"                    
+                UsernameAttributes: 
+                    - email
+
+        NewCognitoUserClient:
+            Type: AWS::Cognito::UserPoolClient
+            Properties:
+                UserPoolId: !Ref NewCognito
+                ClientName: ClientSystemUserPool
+                GenerateSecret: True
+                CallbackURLs:
+                    - http://localhost:3000/callback
+                AllowedOAuthFlowsUserPoolClient: True
+                AllowedOAuthFlows:
+                    - code
+                    - implicit
+                AllowedOAuthScopes:
+                    - email
+                    - openid
+                SupportedIdentityProviders:
+                    - COGNITO
+
+        NewCognitoUserPoolDomain:
+            Type: AWS::Cognito::UserPoolDomain
+            Properties:
+                Domain: systemuserpool
+                UserPoolId: sa-east-1_ry8Fq4CQb
