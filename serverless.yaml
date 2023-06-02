@@ -5,18 +5,21 @@ frameworkVersion: '3'
 provider:
     name: aws
     region: "sa-east-1"
-    runtime: nodejs18.x
+    # runtime: nodejs18.x
     httpApi:
         authorizers:
             cognitoAuthorizer:
                 type: jwt
-                identitySource: $request.headers.Authorization
-                issuerUrl: https://cognito-idp.sa-east-1.amazonaws.com/sa-east-1_ry8Fq4CQb
+                identitySource: $request.header.Authorization
                 audience:
-                    - 1bo52vqupe63rk5lujaos1gbef
+                    - !Ref NewCognitoUserClient
+                issuerUrl: !Join
+                    - ''
+                    - - 'https://cognito-idp.sa-east-1.amazonaws.com/'
+                      - !Ref NewCognito
     iam:
         role:
-            statements:            
+            statements:
                 - Effect: Allow
                   Action:
                     - dynamodb:PutItem
@@ -32,7 +35,7 @@ functions:
                 path: /item/{id}
                 method: get
     itemsInsert:
-        handler: src/items-insert.itemsInsert        
+        handler: src/items-insert.itemsInsert
         events:
             - httpApi:
                 path: /item
@@ -64,7 +67,7 @@ resources:
                 AccountRecoverySetting:
                     RecoveryMechanisms:
                         - Name: verified_email
-                          Priority: 1                          
+                          Priority: 1
                 UserPoolName: SystemUserPool
                 Policies:
                     PasswordPolicy:
@@ -105,4 +108,4 @@ resources:
             Type: AWS::Cognito::UserPoolDomain
             Properties:
                 Domain: systemuserpool
-                UserPoolId: sa-east-1_ry8Fq4CQb
+                UserPoolId: !Ref NewCognito
